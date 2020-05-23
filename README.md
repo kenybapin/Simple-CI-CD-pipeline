@@ -86,7 +86,7 @@ Now, following jobs will run automatically after each push to git repo.
 
 # Application
 
-Spring Boot web application (created with thymeleaf) is now deployed ion servers with.<br>
+Spring Boot web application (created with thymeleaf) is now deployed on servers.<br>
 See this [Dockerfile](Dockerfile) for more informations.
 
 ```
