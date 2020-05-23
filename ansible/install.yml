@@ -1,0 +1,35 @@
+- name: Deploy app
+  hosts: "{{ server }}"
+  vars:
+    - image: "XXX"
+    - tag: "XXX"
+    - server: "XXX"
+    
+  tasks:
+    - name: Prune all docker containers on host
+      command: docker container prune -f
+
+    - name: Prune all docker images on host
+      command: docker image prune -af
+      
+    - name: Log into private registry
+      docker_login:
+        registry: http://192.168.100.20:5000
+        username: keny
+        password: azerty
+        reauthorize: yes
+
+    - name: Load image from a private registry
+      docker_image:
+        name: 192.168.100.20:5000/app
+        tag: "{{ tag }}"
+        pull: yes
+
+    - name: Start a container with a command
+      docker_container:
+        name: app
+        image: "{{ image }}"
+        state: started
+        detach: yes
+        ports:
+         - "9000:8080"

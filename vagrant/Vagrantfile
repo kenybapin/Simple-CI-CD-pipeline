@@ -1,0 +1,115 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+Vagrant.configure("2") do |config|
+
+  # server test
+  config.vm.define "app-test" do |app_test|
+    app_test.vm.box = "bento/ubuntu-18.04"
+    app_test.vm.hostname = "app-test"
+	app_test.vm.provision "docker"
+    app_test.vm.box_url = "bento/ubuntu-18.04"
+    app_test.vm.network :private_network, ip: "192.168.100.48"
+    app_test.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 512]
+      v.customize ["modifyvm", :id, "--name", "app-test"]
+      v.customize ["modifyvm", :id, "--cpus", "1"]
+    end
+	app_test.vm.provision "ansible_local" do |ansible|
+	ansible.playbook = "app.yml"
+	ansible.extra_vars = {
+		node_ip: "192.168.100.48",
+	}
+    end
+  end	
+
+  # server preprod
+  config.vm.define "app-preprod" do |app_preprod|
+    app_preprod.vm.box = "bento/ubuntu-18.04"
+    app_preprod.vm.hostname = "app-preprod"
+	app_preprod.vm.provision "docker"
+    app_preprod.vm.box_url = "bento/ubuntu-18.04"
+    app_preprod.vm.network :private_network, ip: "192.168.100.49"
+    app_preprod.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 512]
+      v.customize ["modifyvm", :id, "--name", "app-preprod"]
+      v.customize ["modifyvm", :id, "--cpus", "1"]
+    end
+	app_preprod.vm.provision "ansible_local" do |ansible|
+	ansible.playbook = "app.yml"
+	ansible.extra_vars = {
+		node_ip: "192.168.100.49",
+	}
+    end
+  end
+  
+  # server prod
+  config.vm.define "app-prod" do |app_prod|
+    app_prod.vm.box = "bento/ubuntu-18.04"
+    app_prod.vm.hostname = "app-prod"
+	app_prod.vm.provision "docker"
+    app_prod.vm.box_url = "bento/ubuntu-18.04"
+    app_prod.vm.network :private_network, ip: "192.168.100.50"
+    app_prod.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 512]
+      v.customize ["modifyvm", :id, "--name", "app-prod"]
+      v.customize ["modifyvm", :id, "--cpus", "1"]
+    end
+	app_prod.vm.provision "ansible_local" do |ansible|
+	ansible.playbook = "app.yml"
+	ansible.extra_vars = {
+		node_ip: "192.168.100.50",
+	}
+    end
+  end
+
+  # data server : Docker registry + Maven 
+  config.vm.define "mydata" do |mydata|
+    mydata.vm.box = "bento/ubuntu-18.04"
+    mydata.vm.hostname = "mydata"
+	mydata.vm.provision "docker"
+    mydata.vm.box_url = "bento/ubuntu-18.04"
+    mydata.vm.network :private_network, ip: "192.168.100.20"
+    mydata.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 512]
+      v.customize ["modifyvm", :id, "--name", "mydata"]
+      v.customize ["modifyvm", :id, "--cpus", "1"]
+    end
+	mydata.vm.provision "ansible_local" do |ansible|
+	ansible.playbook = "mydata.yml"
+	ansible.extra_vars = {
+		node_ip: "192.168.100.20",
+	}
+    end
+  end
+  
+    # jenkins server
+  config.vm.define "jenkins" do |jenkins|
+    jenkins.vm.box = "bento/ubuntu-18.04"
+    jenkins.vm.hostname = "jenkins"
+	jenkins.vm.provision "docker"
+    jenkins.vm.box_url = "bento/ubuntu-18.04"
+    jenkins.vm.network :private_network, ip: "192.168.100.10"
+    jenkins.vm.provider :virtualbox do |v|
+      v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+      v.customize ["modifyvm", :id, "--memory", 3072]
+      v.customize ["modifyvm", :id, "--name", "jenkins"]
+      v.customize ["modifyvm", :id, "--cpus", "2"]
+    end
+	jenkins.vm.provision "ansible_local" do |ansible|
+	ansible.playbook = "jenkins.yml"
+	ansible.extra_vars = {
+		node_ip: "192.168.100.10",
+	}
+    end
+  end
+  
+end

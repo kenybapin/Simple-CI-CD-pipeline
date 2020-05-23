@@ -1,0 +1,74 @@
+---
+- hosts: jenkins
+  become: true
+  tasks:         
+  - name: create docker daemon file
+    file:
+      path: /etc/docker/daemon.json
+      state: touch
+
+  - name: add insecure registry to srv-data     
+    shell:
+      cmd: |
+        cat > /etc/docker/daemon.json << EOF
+        {
+          "insecure-registries" : ["192.168.100.20:5000"]
+        }
+        EOF
+
+  - name: Restart docker
+    service:
+      name: docker
+      daemon_reload: yes
+      state: restarted
+      
+  - name: Install utilis and ansible
+    apt: 
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+        - git
+        - sshpass
+        - wget
+        - ansible
+        - gnupg2
+        - pass
+        - python-docker
+        - curl
+        
+  - name: ensure the jenkins apt repository key is installed
+    apt_key: url=https://pkg.jenkins.io/debian-stable/jenkins.io.key state=present
+    become: yes
+
+  - name: ensure the repository is configured
+    apt_repository: repo='deb https://pkg.jenkins.io/debian-stable binary/' state=present
+    become: yes
+
+  - name: install jenkins     
+    shell:
+      cmd: |
+        sudo apt-get update -qq >/dev/null
+        sudo apt-get install -qq -y default-jre jenkins >/dev/null
+        sudo systemctl enable jenkins
+        sudo systemctl start jenkins
+
+  - name: configure docker and install docker-compose
+    shell:
+      cmd: |
+        sudo usermod -aG docker jenkins
+        sudo curl -sL "https://github.com/docker/compose/releases/download/1.25.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+
+  - name: add a list of hosts to /etc/hosts
+    become: yes
+    lineinfile:
+      dest: /etc/hosts
+      regexp: "^{{ item['ip'] }}.*$"
+      line: "{{ item['ip'] }}\t\t{{ item['names'] | join(' ') }}"
+      state: present
+    with_items:
+    - ip: 192.168.100.20
+      names:
+      - gitlab.example.com

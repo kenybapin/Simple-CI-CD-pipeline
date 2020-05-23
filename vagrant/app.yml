@@ -1,0 +1,33 @@
+---
+- hosts: app-test, app-preprod, app-prod
+  become: true
+  tasks:         
+  - name: create docker daemon file
+    file:
+      path: /etc/docker/daemon.json
+      state: touch
+
+  - name: add insecure registry to srv-data     
+    shell:
+      cmd: |
+        cat > /etc/docker/daemon.json << EOF
+        {
+          "insecure-registries" : ["192.168.100.20:5000"]
+        }
+        EOF
+
+  - name: ensure apt cache is up to date
+    apt: update_cache=yes
+
+  - name: Install Docker utils
+    apt: name={{item}}
+    with_items:
+        - python-docker
+        - gnupg2
+        - pass
+        
+  - name: Restart docker
+    service:
+      name: docker
+      daemon_reload: yes
+      state: restarted
